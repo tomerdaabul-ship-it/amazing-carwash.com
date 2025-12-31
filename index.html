@@ -125,7 +125,7 @@
 </section>
 
 <script>
-  // --- המקומות היחידים שצריך לעדכן ---
+  // --- PASTE YOUR NEW LINK HERE ---
   const CAL_API_URL = "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec"; 
   const CAL_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
@@ -154,8 +154,6 @@
     const resp = await jsonpRequest({ action: "busy", date: dateInput.value });
     const busy = resp.busy || [];
     timeSelect.innerHTML = "";
-    
-    // יצירת רשימת זמנים 9:00 עד 14:00
     for (let h = 9; h <= 14; h++) {
       for (let m of ["00", "35"]) {
         if (h === 14 && m === "35") break;
@@ -173,25 +171,14 @@
     e.preventDefault();
     const name = document.getElementById("name").value;
     const time = document.getElementById("time").value;
-    const service = document.getElementById("service").value;
     const btn = document.getElementById("submitBtn");
-    
     btn.disabled = true;
     document.getElementById("bookingStatus").textContent = "רושם ביומן...";
-
-    const resp = await jsonpRequest({
-      action: "book", name: name, date: document.getElementById("date").value, time: time
-    });
-
-    if (resp.ok) {
-      window.location.href = `https://wa.me/972585378542?text=הזמנה: ${name}, ${service}, שעה: ${time}`;
-    } else {
-      alert("שגיאה בחיבור");
-      btn.disabled = false;
-    }
+    const resp = await jsonpRequest({ action: "book", name: name, date: document.getElementById("date").value, time: time });
+    if (resp.ok) { window.location.href = `https://wa.me/972585378542?text=הזמנה: ${name}, שעה: ${time}`; }
+    else { alert("שגיאה"); btn.disabled = false; }
   }
 
-  // לוגיקת כוכבים
   let rating = 0;
   const stars = document.querySelectorAll('#stars span');
   stars.forEach((s, i) => s.onclick = () => {
