@@ -5,74 +5,23 @@
   <title>האחים מכונית בע"מ 🚗💦🧽</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #e8f2ff;
-      color: #222;
-      background: url('background.jpg') center/cover fixed no-repeat;
-    }
-    header {
-      position: relative;
-      padding: 60px 20px;
-      text-align: center;
-      color: white;
-    }
-    header::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(10, 80, 160, 0.7);
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #e8f2ff; color: #222; background: url('background.jpg') center/cover fixed no-repeat; }
+    header { position: relative; padding: 60px 20px; text-align: center; color: white; }
+    header::before { content: ""; position: absolute; inset: 0; background: rgba(10, 80, 160, 0.7); }
     header * { position: relative; z-index: 1; }
     .team-note { position: absolute; left: 20px; top: 20px; font-weight: bold; }
-    section {
-      background: white;
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+    section { background: white; max-width: 900px; margin: 20px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     h2 { color: #0a74da; }
-    ul { line-height: 1.8; }
-    button {
-      background: #0a74da;
-      color: white;
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+    button { background: #0a74da; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; cursor: pointer; }
     button:hover { background: #085bb0; }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px; margin-top: 5px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
+    input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
     footer { text-align: center; padding: 15px; color: #666; }
-    .rating-box {
-      position: fixed;
-      right: 20px;
-      top: 140px;
-      width: 230px;
-      background: #ffffffee;
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 999;
-    }
+    .rating-box { position: fixed; right: 20px; top: 140px; width: 230px; background: #ffffffee; border-radius: 12px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 999; }
     .stars span { filter: grayscale(100%); cursor: pointer; font-size: 22px; }
     .stars span.active { filter: grayscale(0%); }
     .review { border-bottom: 1px solid #eee; padding: 10px 0; }
     .status { margin-top: 10px; font-weight: bold; color: #0a74da; }
-    @media (max-width: 980px) {
-      .rating-box { position: static; width: auto; max-width: 900px; margin: 10px auto; }
-    }
+    @media (max-width: 980px) { .rating-box { position: static; width: auto; max-width: 900px; margin: 10px auto; } }
   </style>
 </head>
 <body>
@@ -128,7 +77,8 @@
 
 <script>
   // --- CONFIGURATION ---
-  const CAL_API_URL = https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec"; 
+  // FIXED: Added missing quotation mark below
+  const CAL_API_URL = "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec"; 
   const CAL_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
   const SLOT_MINUTES = 35;
 
@@ -139,15 +89,19 @@
       params.prefix = cb;
       const url = `${CAL_API_URL}?${new URLSearchParams(params).toString()}`;
       const script = document.createElement("script");
+      
       window[cb] = (data) => {
         delete window[cb];
         document.body.removeChild(script);
         resolve(data);
       };
+
       script.onerror = () => {
-        console.error("Script load error. Check if Google Web App is deployed and accessible.");
+        console.error("Connection Error");
+        document.getElementById("bookingStatus").textContent = "שגיאת חיבור: וודא שהקישור של גוגל תקין.";
         resolve({ok: false, error: "Network error"});
       };
+
       document.body.appendChild(script);
     });
   }
@@ -155,7 +109,6 @@
   const dateInput = document.getElementById("date");
   const timeSelect = document.getElementById("time");
 
-  // Default to next Friday
   const today = new Date();
   const nextFriday = new Date();
   nextFriday.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
@@ -165,6 +118,8 @@
     timeSelect.innerHTML = "<option>בודק שעות פנויות...</option>";
     try {
         const resp = await jsonpRequest({ token: CAL_TOKEN, action: "busy", date: dateInput.value });
+        if (resp.error) throw new Error(resp.error);
+        
         const busy = resp.busy || [];
         timeSelect.innerHTML = "";
         
@@ -178,6 +133,7 @@
         }
     } catch (e) {
         timeSelect.innerHTML = "<option>בעיית חיבור ליומן</option>";
+        console.error(e);
     }
   }
 
@@ -214,7 +170,6 @@
     }
   }
 
-  // --- RATING LOGIC ---
   let rating = 0;
   const stars = document.querySelectorAll('#stars span');
   stars.forEach((s, i) => s.onclick = () => {
@@ -239,6 +194,5 @@
     `).join('') || "אין חוות דעת עדיין";
   })();
 </script>
-
 </body>
 </html>
