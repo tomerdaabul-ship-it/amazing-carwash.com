@@ -4,49 +4,58 @@
   <meta charset="UTF-8" />
   <title>האחים מכונית בע"מ 🚗💦🧽</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #e8f2ff;
-      color: #222;
-      background: url('background.jpg') center/cover fixed no-repeat;
+      color: #f5f5f5;
+      background:
+        linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+        url('images/sporty-car-bg.jpg') center / cover fixed no-repeat;
     }
+
     header {
       position: relative;
-      padding: 60px 20px;
+      padding: 70px 20px;
       text-align: center;
-      color: white;
     }
-    header::before {
-      content: "";
+
+    header h1 {
+      font-size: 44px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 0 6px 18px rgba(0,0,0,0.9);
+      margin: 0;
+    }
+
+    header p {
+      margin-top: 10px;
+      font-weight: bold;
+      opacity: 0.9;
+    }
+
+    .team-note {
       position: absolute;
-      inset: 0;
-      background: rgba(10, 80, 160, 0.7);
+      left: 20px;
+      top: 20px;
+      font-weight: bold;
     }
-    header * { position: relative; z-index: 1; }
-    .team-note { position: absolute; left: 20px; top: 20px; font-weight: bold; }
+
     section {
-      background: white;
+      background: rgba(255,255,255,0.95);
+      color: #222;
       max-width: 900px;
       margin: 20px auto;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
+
     h2 { color: #0a74da; }
+
     ul { line-height: 1.8; }
-    button {
-      background: #0a74da;
-      color: white;
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover { background: #085bb0; }
+
     input, select, textarea {
       width: 100%;
       padding: 8px;
@@ -55,31 +64,69 @@
       border: 1px solid #ccc;
       box-sizing: border-box;
     }
+
+    button {
+      background: linear-gradient(135deg, #0a74da, #003f8f);
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+    }
+
     .rating-box {
       position: fixed;
       right: 20px;
       top: 140px;
       width: 230px;
-      background: #ffffffee;
+      background: rgba(255,255,255,0.95);
+      color: #222;
       border-radius: 12px;
       padding: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       z-index: 999;
     }
-    .stars span { filter: grayscale(100%); cursor: pointer; font-size: 22px; }
+
+    .stars span {
+      filter: grayscale(100%);
+      cursor: pointer;
+      font-size: 22px;
+    }
+
     .stars span.active { filter: grayscale(0%); }
-    .status { margin-top: 10px; font-weight: bold; color: #0a74da; }
+
+    .status {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #0a74da;
+    }
+
     @media (max-width: 980px) {
-      .rating-box { position: static; width: auto; max-width: 900px; margin: 10px auto; }
+      .rating-box {
+        position: static;
+        width: auto;
+        max-width: 900px;
+        margin: 10px auto;
+      }
     }
   </style>
 </head>
+
 <body>
 
 <header>
   <div class="team-note">👥 אנחנו 4 אנשים בעסק</div>
   <h1>האחים מכונית בע"מ 🚗💦🧽</h1>
-  <p style="color:white;font-weight:bold;">(יהיו ימי שישי שלא תתקיים שטיפה בשל סיבות פרטיות)</p>
+  <p>(יהיו ימי שישי שלא תתקיים שטיפה בשל סיבות פרטיות)</p>
 </header>
 
 <div class="rating-box">
@@ -110,12 +157,6 @@
     <input id="name" required />
     <label>טלפון</label>
     <input id="phone" type="tel" required />
-    <label>סוג שטיפה</label>
-    <select id="service">
-      <option>פנים וחוץ – 60 ₪</option>
-      <option>חוץ בלבד – 25 ₪</option>
-      <option>פנים בלבד – 35 ₪</option>
-    </select>
     <label>תאריך (שישי בלבד)</label>
     <input id="date" type="date" required onchange="refreshTimes()" />
     <label>שעה פנויה</label>
@@ -126,11 +167,9 @@
 </section>
 
 <script>
-  /* ===== CONFIG ===== */
   const CAL_API_URL = "https://script.google.com/macros/s//AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec";
   const CAL_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-  /* ===== JSONP CORE ===== */
   function jsonpRequest(params) {
     return new Promise(resolve => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -146,39 +185,30 @@
         script.remove();
       };
 
-      script.onerror = () => {
-        resolve({ ok: false });
-        script.remove();
-      };
-
       script.src = url;
       document.body.appendChild(script);
     });
   }
 
-  /* ===== TIME SLOTS ===== */
   async function refreshTimes() {
-    const dateInput = document.getElementById("date");
+    const date = document.getElementById("date").value;
     const timeSelect = document.getElementById("time");
-    const date = dateInput.value;
-
-    if (!date) return;
 
     if (new Date(date).getDay() !== 5) {
       alert("ניתן להזמין רק ביום שישי");
-      dateInput.value = "";
+      document.getElementById("date").value = "";
       return;
     }
 
-    timeSelect.innerHTML = "<option>בודק שעות פנויות...</option>";
-    const resp = await jsonpRequest({ action: "busy", date });
-    const busy = resp.busy || [];
+    timeSelect.innerHTML = "<option>טוען...</option>";
+    const res = await jsonpRequest({ action: "busy", date });
+    const busy = res.busy || [];
 
     timeSelect.innerHTML = "";
     for (let h = 9; h <= 14; h++) {
       for (let m of ["00", "35"]) {
         if (h === 14 && m === "35") continue;
-        const t = `${String(h).padStart(2, '0')}:${m}`;
+        const t = `${String(h).padStart(2,'0')}:${m}`;
         const opt = document.createElement("option");
         opt.value = t;
         opt.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
@@ -188,56 +218,47 @@
     }
   }
 
-  /* ===== BOOKING ===== */
   async function bookAndWhatsApp(e) {
     e.preventDefault();
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
-
     document.getElementById("bookingStatus").textContent = "רושם ביומן...";
 
-    const resp = await jsonpRequest({
-      action: "book",
-      name: document.getElementById("name").value,
-      phone: document.getElementById("phone").value,
-      date: document.getElementById("date").value,
-      time: document.getElementById("time").value
-    });
+    const name = document.getElementById("name").value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
 
-    if (resp.ok) {
+    const res = await jsonpRequest({ action: "book", name, date, time });
+
+    if (res.ok) {
+      const msg =
+        `שלום,\nנקבע תור לשטיפת רכב 🚗\n\nשם: ${name}\nתאריך: ${date}\nשעה: ${time}`;
       window.location.href =
-        `https://wa.me/972585378542?text=` +
-        encodeURIComponent("הזמנת שטיפה נקבעה בהצלחה");
-    } else {
-      alert("שגיאה בקביעת התור");
-      btn.disabled = false;
+        `https://wa.me/972585378542?text=` + encodeURIComponent(msg);
     }
   }
 
-  /* ===== REVIEWS (UNCHANGED) ===== */
+  /* Reviews logic unchanged */
   let rating = 0;
   const stars = document.querySelectorAll('#stars span');
-  stars.forEach((s, i) => s.onclick = () => {
-    rating = i + 1;
-    stars.forEach((st, idx) => st.classList.toggle('active', idx < rating));
+  stars.forEach((s,i)=>s.onclick=()=>{
+    rating=i+1;
+    stars.forEach((st,idx)=>st.classList.toggle('active',idx<rating));
   });
 
   function sendFeedback() {
-    const name = document.getElementById('reviewName').value || 'אנונימי';
-    const text = document.getElementById('feedback').value;
-    if (!rating || !text) return alert("אנא דרגו");
-    let reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    reviews.unshift({ name, rating, text });
-    localStorage.setItem('reviews', JSON.stringify(reviews.slice(0, 5)));
+    const name=document.getElementById('reviewName').value||'אנונימי';
+    const text=document.getElementById('feedback').value;
+    if(!rating||!text) return alert("אנא דרגו");
+    let r=JSON.parse(localStorage.getItem('reviews')||'[]');
+    r.unshift({name,rating,text});
+    localStorage.setItem('reviews',JSON.stringify(r.slice(0,5)));
     location.reload();
   }
 
-  (function loadReviews() {
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    document.getElementById('reviewsList').innerHTML =
-      reviews.map(r =>
-        `<div><b>${r.name}</b> (${'⭐'.repeat(r.rating)})<br>${r.text}</div>`
-      ).join('') || "אין חוות דעת";
+  (function(){
+    const r=JSON.parse(localStorage.getItem('reviews')||'[]');
+    document.getElementById('reviewsList').innerHTML=
+      r.map(x=>`<div><b>${x.name}</b> (${'⭐'.repeat(x.rating)})<br>${x.text}</div>`).join('')
+      || "אין חוות דעת";
   })();
 </script>
 
