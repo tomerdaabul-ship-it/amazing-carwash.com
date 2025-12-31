@@ -9,7 +9,7 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      color: #f5f5f5;
+      color: #fff;
       background:
         linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
         url("images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg")
@@ -21,21 +21,13 @@
       text-align: center;
     }
 
-    header h1 {
-      font-size: 42px;
-      text-shadow: 0 6px 18px rgba(0,0,0,0.9);
-    }
-
     section {
-      background: rgba(255,255,255,0.70);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(255,255,255,0.72);
       color: #111;
       max-width: 900px;
       margin: 20px auto;
       padding: 20px;
       border-radius: 14px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.45);
     }
 
     input, select, textarea {
@@ -45,11 +37,10 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       background: rgba(255,255,255,0.85);
-      box-sizing: border-box;
     }
 
     button {
-      background: linear-gradient(135deg, #0a74da, #003f8f);
+      background: #0a74da;
       color: white;
       border: none;
       padding: 12px;
@@ -61,25 +52,20 @@
       margin-top: 10px;
     }
 
-    /* ⭐ Reviews */
     .rating-box {
       position: fixed;
       right: 20px;
       top: 140px;
       width: 240px;
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(255,255,255,0.8);
       color: #111;
-      border-radius: 12px;
       padding: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-      z-index: 999;
+      border-radius: 12px;
     }
 
     .stars span {
-      font-size: 22px;
       cursor: pointer;
+      font-size: 22px;
       filter: grayscale(100%);
     }
 
@@ -87,19 +73,11 @@
       filter: grayscale(0%);
     }
 
-    .review {
-      margin-top: 8px;
-      font-size: 14px;
-      border-top: 1px solid #ccc;
-      padding-top: 6px;
-    }
-
     @media (max-width: 900px) {
       .rating-box {
         position: static;
-        width: auto;
-        max-width: 900px;
         margin: 10px auto;
+        max-width: 900px;
       }
     }
   </style>
@@ -112,7 +90,7 @@
   <p>(הזמנות בימי שישי בלבד)</p>
 </header>
 
-<!-- ⭐ REVIEWS -->
+<!-- ⭐ Reviews -->
 <div class="rating-box">
   <h3>דרגו אותנו ⭐</h3>
   <div class="stars" id="stars">
@@ -156,116 +134,105 @@
 </section>
 
 <script>
-  const CAL_API_URL =
-    "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec";
-  const CAL_TOKEN =
-    "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
+  const CAL_API_URL = "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec";
+  const CAL_TOKEN = "YOUR_SECRET_TOKEN";
 
-  /* 🔒 Restrict date picker to Fridays */
-  (function restrictToFridays() {
-    const dateInput = document.getElementById("date");
+  /* 🔒 Fridays only */
+  (function () {
+    const d = document.getElementById("date");
     const today = new Date();
-    const day = today.getDay();
-    const daysUntilFriday = (5 - day + 7) % 7 || 7;
-    const nextFriday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() + daysUntilFriday
-    );
-    dateInput.min =
-      `${nextFriday.getFullYear()}-${String(nextFriday.getMonth()+1).padStart(2,"0")}-${String(nextFriday.getDate()).padStart(2,"0")}`;
+    const diff = (5 - today.getDay() + 7) % 7 || 7;
+    const fri = new Date(today);
+    fri.setDate(today.getDate() + diff);
+    d.min = fri.toISOString().slice(0, 10);
   })();
 
-  /* ---------- JSONP for busy slots ---------- */
+  /* ---------- JSONP (busy only) ---------- */
   function jsonpRequest(params) {
     return new Promise(resolve => {
-      const cb = "cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      const cb = "cb_" + Math.random().toString(36).slice(2);
       params.prefix = cb;
       params.token = CAL_TOKEN;
-      params._ts = Date.now();
 
-      const script = document.createElement("script");
-      script.src = CAL_API_URL + "?" + new URLSearchParams(params);
+      const s = document.createElement("script");
+      s.src = CAL_API_URL + "?" + new URLSearchParams(params);
 
       window[cb] = data => {
         resolve(data);
         delete window[cb];
-        script.remove();
+        s.remove();
       };
 
-      document.body.appendChild(script);
+      document.body.appendChild(s);
     });
   }
 
   async function refreshTimes() {
-    const dateStr = document.getElementById("date").value;
-    const timeSelect = document.getElementById("time");
-    if (!dateStr) return;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time");
+    if (!date) return;
 
-    timeSelect.innerHTML = "<option>טוען...</option>";
-    const res = await jsonpRequest({ action: "busy", date: dateStr });
+    time.innerHTML = "<option>טוען...</option>";
+    const res = await jsonpRequest({ action: "busy", date });
     const busy = res.busy || [];
 
-    timeSelect.innerHTML = "";
+    time.innerHTML = "";
     for (let h = 9; h <= 14; h++) {
       for (let m of ["00", "35"]) {
         if (h === 14 && m === "35") continue;
         const t = `${String(h).padStart(2,"0")}:${m}`;
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
-        opt.disabled = busy.includes(t);
-        timeSelect.appendChild(opt);
+        const o = document.createElement("option");
+        o.value = t;
+        o.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
+        o.disabled = busy.includes(t);
+        time.appendChild(o);
       }
     }
   }
 
-  /* ---------- BOOK (SERVER-SIDE REDIRECT) ---------- */
+  /* ---------- BOOK (SERVER REDIRECT) ---------- */
   function bookAndWhatsApp(e) {
     e.preventDefault();
 
     const params = new URLSearchParams({
       action: "book",
-      token: CAL_TOKEN
+      token: CAL_TOKEN,
+      name: name.value,
+      service: service.value,
+      date: date.value,
+      time: time.value
     });
 
-    ["name","service","date","time"].forEach(id =>
-      params.append(id, document.getElementById(id).value)
-    );
-
-    // 🔥 Redirect browser to Apps Script
     window.location.href = CAL_API_URL + "?" + params.toString();
   }
 
-  /* ---------- REVIEWS ---------- */
+  /* ---------- Reviews ---------- */
   let rating = 0;
   const stars = document.querySelectorAll("#stars span");
-  stars.forEach((s, i) => {
-    s.onclick = () => {
-      rating = i + 1;
-      stars.forEach((st, idx) =>
-        st.classList.toggle("active", idx < rating)
-      );
-    };
+
+  stars.forEach((s, i) => s.onclick = () => {
+    rating = i + 1;
+    stars.forEach((st, idx) =>
+      st.classList.toggle("active", idx < rating)
+    );
   });
 
   function sendFeedback() {
-    const name = document.getElementById("reviewName").value || "אנונימי";
-    const text = document.getElementById("feedback").value;
+    const name = reviewName.value || "אנונימי";
+    const text = feedback.value;
     if (!rating || !text) return alert("אנא דרגו וכתבו תגובה");
 
     const reviews = JSON.parse(localStorage.getItem("reviews") || "[]");
     reviews.unshift({ name, rating, text });
-    localStorage.setItem("reviews", JSON.stringify(reviews.slice(0, 5)));
+    localStorage.setItem("reviews", JSON.stringify(reviews.slice(0,5)));
     location.reload();
   }
 
-  (function loadReviews() {
+  (function () {
     const reviews = JSON.parse(localStorage.getItem("reviews") || "[]");
-    document.getElementById("reviewsList").innerHTML =
-      reviews.map(r =>
-        `<div class="review"><b>${r.name}</b> (${ "⭐".repeat(r.rating) })<br>${r.text}</div>`
-      ).join("") || "אין חוות דעת";
+    reviewsList.innerHTML = reviews.map(r =>
+      `<div><b>${r.name}</b> (${ "⭐".repeat(r.rating) })<br>${r.text}</div>`
+    ).join("") || "אין חוות דעת";
   })();
 </script>
 
