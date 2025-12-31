@@ -1,120 +1,199 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>האחים מכונית בע"מ 🚗💦</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* עיצוב האתר */
+    body { 
+      margin: 0; 
+      font-family: Arial, sans-serif; 
+      background-color: #e8f2ff; 
+      color: #222; 
+      text-align: center;
+    }
+    header { 
+      background: #0a74da; 
+      color: white; 
+      padding: 40px 20px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    section { 
+      background: white; 
+      max-width: 500px; 
+      margin: 30px auto; 
+      padding: 25px; 
+      border-radius: 15px; 
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
+    }
+    h2 { color: #0a74da; margin-top: 0; }
+    label { display: block; text-align: right; margin-top: 15px; font-weight: bold; }
+    input, select, button { 
+      width: 100%; 
+      padding: 12px; 
+      margin-top: 8px; 
+      border-radius: 8px; 
+      border: 1px solid #ccc; 
+      box-sizing: border-box; 
+      font-size: 16px;
+    }
+    button { 
+      background: #0a74da; 
+      color: white; 
+      border: none; 
+      font-weight: bold; 
+      cursor: pointer; 
+      margin-top: 25px;
+      transition: background 0.3s;
+    }
+    button:hover { background: #085bb0; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .status { margin-top: 15px; font-weight: bold; color: #0a74da; min-height: 20px; }
+    .price-list { text-align: right; line-height: 1.8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>האחים מכונית בע"מ 🚗💦🧽</h1>
+  <p>שטיפת רכב מקצועית עד הבית</p>
+</header>
+
+<section>
+  <h2>מחירון שירותים</h2>
+  <div class="price-list">
+    <li>🚗 <b>פנים + חוץ</b> – 60 ₪</li>
+    <li>🚿 <b>חוץ בלבד</b> – 25 ₪</li>
+    <li>🧼 <b>פנים בלבד</b> – 35 ₪</li>
+  </div>
+</section>
+
+<section>
+  <h2>הזמנת תור</h2>
+  <form id="bookingForm" onsubmit="handleFormSubmit(event)">
+    <label>שם מלא</label>
+    <input id="userName" type="text" placeholder="הכנס שם מלא" required>
+
+    <label>מספר טלפון</label>
+    <input id="userPhone" type="tel" placeholder="050-0000000" required>
+
+    <label>סוג שירות</label>
+    <select id="userType">
+      <option>פנים וחוץ</option>
+      <option>חוץ בלבד</option>
+      <option>פנים בלבד</option>
+    </select>
+
+    <label>בחר תאריך</label>
+    <input id="bookingDate" type="date" required onchange="fetchBusySlots()">
+
+    <label>בחר שעה פנויה</label>
+    <select id="bookingTime">
+      <option value="">בחר תאריך קודם...</option>
+    </select>
+
+    <button type="submit" id="submitBtn">קבע תור ושלח בוואטסאפ</button>
+    <div id="formMsg" class="status"></div>
+  </form>
+</section>
+
 <script>
-  // --- CONFIGURATION ---
-  const CAL_API_URL = "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec"; 
-  const CAL_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
-  const SLOT_MINUTES = 35;
+  // --- הגדרות חיבור ---
+  // החלף את הטקסט למטה בקישור שקיבלת מגוגל (חייב להסתיים ב-/exec)
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec"; 
+  const SECRET_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-  // --- CALENDAR LOGIC ---
-  async function jsonpRequest(params) {
+  // פונקציה לשליחת בקשה לגוגל (JSONP)
+  async function apiRequest(params) {
     return new Promise((resolve) => {
-      const cb = "cb_" + Math.random().toString(36).slice(2);
-      params.prefix = cb;
-      const url = `${CAL_API_URL}?${new URLSearchParams(params).toString()}`;
+      const callbackName = "cb_" + Date.now();
+      params.prefix = callbackName;
+      params.token = SECRET_TOKEN;
+
       const script = document.createElement("script");
-      
-      window[cb] = (data) => {
-        delete window[cb];
-        if (script.parentNode) script.parentNode.removeChild(script);
+      window[callbackName] = (data) => {
         resolve(data);
+        script.remove();
+        delete window[callbackName];
       };
-
-      script.onerror = () => {
-        console.error("Connection Error");
-        resolve({ok: false, error: "Network error"});
-      };
-
+      
+      script.src = `${GOOGLE_SCRIPT_URL}?${new URLSearchParams(params).toString()}`;
       document.body.appendChild(script);
+      
+      // טיימאאוט אם אין תשובה
+      setTimeout(() => {
+        if (window[callbackName]) {
+          resolve({ ok: false, error: "timeout" });
+          script.remove();
+          delete window[callbackName];
+        }
+      }, 10000);
     });
   }
 
-  const dateInput = document.getElementById("date");
-  const timeSelect = document.getElementById("time");
-
-  // Set default date
-  const today = new Date();
-  const nextFriday = new Date();
-  nextFriday.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
-  dateInput.value = nextFriday.toISOString().split('T')[0];
-
-  async function refreshTimes() {
-    timeSelect.innerHTML = "<option>בודק שעות פנויות...</option>";
-    try {
-        const resp = await jsonpRequest({ token: CAL_TOKEN, action: "busy", date: dateInput.value });
-        const busy = resp.busy || [];
-        timeSelect.innerHTML = "";
-        
-        for (let m = 9*60; m < 14.5*60; m += SLOT_MINUTES) {
-          const t = `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t + (busy.includes(t) ? " (תפוס)" : "");
-          opt.disabled = busy.includes(t);
-          timeSelect.appendChild(opt);
-        }
-    } catch (e) {
-        timeSelect.innerHTML = "<option>שגיאה בטעינה</option>";
-    }
-  }
-
-  dateInput.addEventListener("change", refreshTimes);
-  refreshTimes();
-
-  async function bookAndWhatsApp(e) {
-    e.preventDefault();
-    const name = document.getElementById("name").value;
-    const phone = document.getElementById("phone").value;
-    const time = timeSelect.value;
-    const btn = document.getElementById("submitBtn");
+  // טעינת שעות פנויות מהיומן
+  async function fetchBusySlots() {
+    const timeDropdown = document.getElementById("bookingTime");
+    const dateValue = document.getElementById("bookingDate").value;
     
-    btn.disabled = true;
-    document.getElementById("bookingStatus").textContent = "רושם ביומן...";
-
-    try {
-        const resp = await jsonpRequest({
-          token: CAL_TOKEN, action: "book", name: name, phone: phone, 
-          date: dateInput.value, time: time, duration: SLOT_MINUTES
-        });
-
-        if (resp.ok) {
-          const msg = `הזמנה חדשה:%0Aשם: ${name}%0Aתאריך: ${dateInput.value}%0Aשעה: ${time}`;
-          window.location.href = `https://wa.me/972585378542?text=${msg}`;
-        } else {
-          alert("שגיאה: התור כבר נתפס.");
-          refreshTimes();
-        }
-    } catch (e) {
-        alert("שגיאה בחיבור לשרת.");
-    } finally {
-      btn.disabled = false;
-      document.getElementById("bookingStatus").textContent = "";
+    if (!dateValue) return;
+    
+    timeDropdown.innerHTML = "<option>בודק שעות פנויות...</option>";
+    
+    const response = await apiRequest({ action: "busy", date: dateValue });
+    const busyHours = response.busy || [];
+    
+    timeDropdown.innerHTML = "";
+    
+    // יצירת רשימת שעות (9:00 עד 14:30) בקפיצות של 35 דקות
+    for (let hour = 9; hour <= 14; hour++) {
+      for (let min of ["00", "35"]) {
+        const timeStr = `${String(hour).padStart(2, '0')}:${min}`;
+        if (hour === 14 && min === "35") break; // שעה אחרונה 14:00
+        
+        const isBusy = busyHours.includes(timeStr);
+        const option = document.createElement("option");
+        option.value = timeStr;
+        option.textContent = timeStr + (isBusy ? " (תפוס)" : "");
+        option.disabled = isBusy;
+        timeDropdown.appendChild(option);
+      }
     }
   }
 
-  // Feedback Logic
-  let rating = 0;
-  const stars = document.querySelectorAll('#stars span');
-  stars.forEach((s, i) => s.onclick = () => {
-    rating = i + 1;
-    stars.forEach((st, idx) => st.classList.toggle('active', idx < rating));
-  });
+  // שליחת הטופס - רישום ביומן ומעבר לוואטסאפ
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const statusMsg = document.getElementById("formMsg");
+    
+    const data = {
+      action: "book",
+      name: document.getElementById("userName").value,
+      phone: document.getElementById("userPhone").value,
+      service: document.getElementById("userType").value,
+      date: document.getElementById("bookingDate").value,
+      time: document.getElementById("bookingTime").value
+    };
 
-  window.sendFeedback = function() {
-    const name = document.getElementById('reviewName').value || 'אנונימי';
-    const text = document.getElementById('feedback').value;
-    if (!rating || !text) return alert("אנא דרגו בכוכבים וכתבו משוב");
-    let reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    reviews.unshift({ name, rating, text });
-    localStorage.setItem('reviews', JSON.stringify(reviews.slice(0, 5)));
-    location.reload();
-  };
+    btn.disabled = true;
+    statusMsg.innerText = "מעבד הזמנה... נא להמתין";
 
-  (function loadReviews() {
-    const reviews = JSON.parse(localStorage.getItem('reviews') || '[]');
-    const list = document.getElementById('reviewsList');
-    if (list) {
-       list.innerHTML = reviews.map(r => `
-         <div class="review"><b>${r.name}</b> (${'⭐'.repeat(r.rating)})<br>${r.text}</div>
-       `).join('') || "אין חוות דעת עדיין";
+    const response = await apiRequest(data);
+
+    if (response.ok) {
+      statusMsg.innerText = "התור נרשם! עובר לוואטסאפ...";
+      const whatsappMsg = `היי, אני רוצה להזמין שטיפה:%0Aשם: ${data.name}%0Aטלפון: ${data.phone}%0Aשירות: ${data.service}%0Aתאריך: ${data.date}%0Aשעה: ${data.time}`;
+      window.location.href = `https://wa.me/972585378542?text=${whatsappMsg}`;
+    } else {
+      alert("מצטערים, חלה שגיאה או שהתור נתפס ברגע זה.");
+      btn.disabled = false;
+      statusMsg.innerText = "";
+      fetchBusySlots();
     }
-  })();
+  }
 </script>
+
+</body>
+</html>
