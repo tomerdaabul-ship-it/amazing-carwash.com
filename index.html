@@ -61,7 +61,7 @@
       margin-top: 10px;
     }
 
-    /* ⭐ REVIEWS */
+    /* ⭐ Reviews */
     .rating-box {
       position: fixed;
       right: 20px;
@@ -176,7 +176,7 @@
       `${nextFriday.getFullYear()}-${String(nextFriday.getMonth()+1).padStart(2,"0")}-${String(nextFriday.getDate()).padStart(2,"0")}`;
   })();
 
-  /* ---------- JSONP ---------- */
+  /* ---------- JSONP for busy slots ---------- */
   function jsonpRequest(params) {
     return new Promise(resolve => {
       const cb = "cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
@@ -197,18 +197,10 @@
     });
   }
 
-  /* ---------- TIMES ---------- */
   async function refreshTimes() {
     const dateStr = document.getElementById("date").value;
     const timeSelect = document.getElementById("time");
     if (!dateStr) return;
-
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const localDate = new Date(y, m - 1, d);
-    if (localDate.getDay() !== 5) {
-      timeSelect.innerHTML = "<option>רק ימי שישי</option>";
-      return;
-    }
 
     timeSelect.innerHTML = "<option>טוען...</option>";
     const res = await jsonpRequest({ action: "busy", date: dateStr });
@@ -228,38 +220,21 @@
     }
   }
 
-  /* ---------- BOOK + WHATSAPP (FINAL FIX) ---------- */
+  /* ---------- BOOK (SERVER-SIDE REDIRECT) ---------- */
   function bookAndWhatsApp(e) {
     e.preventDefault();
 
-    const name = document.getElementById("name").value;
-    const service = document.getElementById("service").value;
-    const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
-
-    const msg =
-      `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n` +
-      `שם: ${name}\n` +
-      `סוג שטיפה: ${service}\n` +
-      `תאריך: ${date}\n` +
-      `שעה: ${time}`;
-
-    // 🔥 1️⃣ BOOK FIRST (inside user gesture)
-    jsonpRequest({
+    const params = new URLSearchParams({
       action: "book",
-      name,
-      service,
-      date,
-      time
+      token: CAL_TOKEN
     });
 
-    // 🔥 2️⃣ OPEN WHATSAPP IMMEDIATELY AFTER
-    setTimeout(() => {
-      window.open(
-        "https://wa.me/972585378542?text=" + encodeURIComponent(msg),
-        "_blank"
-      );
-    }, 0);
+    ["name","service","date","time"].forEach(id =>
+      params.append(id, document.getElementById(id).value)
+    );
+
+    // 🔥 Redirect browser to Apps Script
+    window.location.href = CAL_API_URL + "?" + params.toString();
   }
 
   /* ---------- REVIEWS ---------- */
