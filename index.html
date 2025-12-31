@@ -174,13 +174,11 @@
     const today = new Date();
     const day = today.getDay();
     const daysUntilFriday = (5 - day + 7) % 7 || 7;
-
     const nextFriday = new Date(
       today.getFullYear(),
       today.getMonth(),
       today.getDate() + daysUntilFriday
     );
-
     dateInput.min =
       `${nextFriday.getFullYear()}-${String(nextFriday.getMonth()+1).padStart(2,"0")}-${String(nextFriday.getDate()).padStart(2,"0")}`;
   })();
@@ -243,7 +241,7 @@
     }
   }
 
-  /* ---------- BOOK + WHATSAPP (iOS SAFE) ---------- */
+  /* ---------- BOOK + WHATSAPP (FINAL iOS FIX) ---------- */
   function bookAndWhatsApp(e) {
     e.preventDefault();
 
@@ -259,12 +257,13 @@
       `תאריך: ${date}\n` +
       `שעה: ${time}`;
 
-    // 🔥 iOS requires WhatsApp to open immediately
-    window.location.href =
-      "https://wa.me/972585378542?text=" +
-      encodeURIComponent(msg);
+    // ✅ Open WhatsApp in NEW TAB (page stays alive)
+    window.open(
+      "https://wa.me/972585378542?text=" + encodeURIComponent(msg),
+      "_blank"
+    );
 
-    // Background booking (allowed)
+    // ✅ Booking completes reliably
     jsonpRequest({
       action: "book",
       name, service, date, time
