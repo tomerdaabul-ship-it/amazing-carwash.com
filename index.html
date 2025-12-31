@@ -61,12 +61,6 @@
       margin-top: 10px;
     }
 
-    .status {
-      margin-top: 10px;
-      font-weight: bold;
-      color: #0a74da;
-    }
-
     /* ⭐ REVIEWS */
     .rating-box {
       position: fixed;
@@ -158,7 +152,6 @@
     </select>
 
     <button type="submit">קבע תור + שלח בוואטסאפ</button>
-    <div id="bookingStatus" class="status"></div>
   </form>
 </section>
 
@@ -200,12 +193,6 @@
         script.remove();
       };
 
-      script.onerror = () => {
-        resolve({ ok: false });
-        delete window[cb];
-        script.remove();
-      };
-
       document.body.appendChild(script);
     });
   }
@@ -241,7 +228,7 @@
     }
   }
 
-  /* ---------- BOOK + WHATSAPP (FINAL iOS FIX) ---------- */
+  /* ---------- BOOK + WHATSAPP (FINAL FIX) ---------- */
   function bookAndWhatsApp(e) {
     e.preventDefault();
 
@@ -257,17 +244,22 @@
       `תאריך: ${date}\n` +
       `שעה: ${time}`;
 
-    // ✅ Open WhatsApp in NEW TAB (page stays alive)
-    window.open(
-      "https://wa.me/972585378542?text=" + encodeURIComponent(msg),
-      "_blank"
-    );
-
-    // ✅ Booking completes reliably
+    // 🔥 1️⃣ BOOK FIRST (inside user gesture)
     jsonpRequest({
       action: "book",
-      name, service, date, time
+      name,
+      service,
+      date,
+      time
     });
+
+    // 🔥 2️⃣ OPEN WHATSAPP IMMEDIATELY AFTER
+    setTimeout(() => {
+      window.open(
+        "https://wa.me/972585378542?text=" + encodeURIComponent(msg),
+        "_blank"
+      );
+    }, 0);
   }
 
   /* ---------- REVIEWS ---------- */
