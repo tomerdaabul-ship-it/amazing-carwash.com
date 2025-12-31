@@ -118,7 +118,7 @@
   <p>(הזמנות בימי שישי בלבד)</p>
 </header>
 
-<!-- ⭐ REVIEWS BOX -->
+<!-- ⭐ REVIEWS -->
 <div class="rating-box">
   <h3>דרגו אותנו ⭐</h3>
 
@@ -130,7 +130,6 @@
   <textarea id="feedback" placeholder="כתבו חוות דעת קצרה..."></textarea>
 
   <button type="button" onclick="sendFeedback()">שלח</button>
-
   <div id="reviewsList"></div>
 </div>
 
@@ -152,16 +151,21 @@
     </select>
 
     <label>תאריך (שישי בלבד)</label>
-    <input id="date" type="date" required />
+    <input id="date" type="date" required step="7" />
 
-    <button type="button" onclick="refreshTimes()">הצג שעות פנויות</button>
+    <button type="button" onclick="refreshTimes()">
+      הצג שעות פנויות
+    </button>
 
     <label>שעה פנויה</label>
     <select id="time">
       <option>בחר תאריך קודם...</option>
     </select>
 
-    <button type="submit">קבע תור + שלח בוואטסאפ</button>
+    <button type="submit">
+      קבע תור + שלח בוואטסאפ
+    </button>
+
     <div id="bookingStatus" class="status"></div>
   </form>
 </section>
@@ -171,6 +175,26 @@
     "https://script.google.com/macros/s//AKfycbwsDXP-PLqwp82wWwm1Wk-iPJgJ-n8uttfx-Y_TF2e3VUbH_toEXUKTgTCs6eLORt4P/exec";
   const CAL_TOKEN =
     "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
+
+  /* 🔒 Restrict date picker to Fridays only */
+  (function restrictToFridays() {
+    const dateInput = document.getElementById("date");
+    const today = new Date();
+    const day = today.getDay(); // 0=Sun ... 5=Fri
+    const daysUntilFriday = (5 - day + 7) % 7 || 7;
+
+    const nextFriday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + daysUntilFriday
+    );
+
+    const yyyy = nextFriday.getFullYear();
+    const mm = String(nextFriday.getMonth() + 1).padStart(2, "0");
+    const dd = String(nextFriday.getDate()).padStart(2, "0");
+
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+  })();
 
   /* ---------- JSONP ---------- */
   function jsonpRequest(params) {
@@ -203,19 +227,16 @@
   async function refreshTimes() {
     const dateStr = document.getElementById("date").value;
     const timeSelect = document.getElementById("time");
-
     if (!dateStr) return;
 
     const [y, m, d] = dateStr.split("-").map(Number);
     const localDate = new Date(y, m - 1, d);
-
     if (localDate.getDay() !== 5) {
       timeSelect.innerHTML = "<option>רק ימי שישי</option>";
       return;
     }
 
     timeSelect.innerHTML = "<option>טוען...</option>";
-
     const res = await jsonpRequest({ action: "busy", date: dateStr });
     const busy = res.busy || [];
 
@@ -256,7 +277,8 @@
         `שעה: ${time}`;
 
       window.location.href =
-        "https://wa.me/972585378542?text=" + encodeURIComponent(msg);
+        "https://wa.me/972585378542?text=" +
+        encodeURIComponent(msg);
     }
   }
 
