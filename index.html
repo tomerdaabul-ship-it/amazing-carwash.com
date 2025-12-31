@@ -10,13 +10,10 @@
       margin: 0;
       font-family: Arial, sans-serif;
       color: #f5f5f5;
-      background-color: #000;
-      background-image:
+      background:
         linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
-        url("images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg");
-      background-position: center;
-      background-size: cover;
-      background-attachment: fixed;
+        url("images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg")
+        center / cover fixed no-repeat;
     }
 
     header {
@@ -41,7 +38,7 @@
       box-shadow: 0 12px 35px rgba(0,0,0,0.45);
     }
 
-    input, select, textarea {
+    input, select {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
@@ -60,6 +57,7 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     .status {
@@ -74,11 +72,12 @@
 
 <header>
   <h1>האחים מכונית בע"מ 🚗💦🧽</h1>
-  <p>(ימי שישי בלבד)</p>
+  <p>(הזמנות בימי שישי בלבד)</p>
 </header>
 
 <section>
   <h2>הזמנת שטיפה</h2>
+
   <form onsubmit="bookAndWhatsApp(event)">
     <label>שם מלא</label>
     <input id="name" required />
@@ -94,21 +93,22 @@
     </select>
 
     <label>תאריך (שישי בלבד)</label>
-    <input
-      id="date"
-      type="date"
-      required
-      onchange="refreshTimes()"
-      oninput="refreshTimes()"
-      onblur="refreshTimes()"
-    />
+    <input id="date" type="date" required />
+
+    <!-- 🔑 iOS-SAFE BUTTON -->
+    <button type="button" onclick="refreshTimes()">
+      הצג שעות פנויות
+    </button>
 
     <label>שעה פנויה</label>
     <select id="time">
       <option>בחר תאריך קודם...</option>
     </select>
 
-    <button type="submit">קבע תור + שלח בוואטסאפ</button>
+    <button type="submit">
+      קבע תור + שלח בוואטסאפ
+    </button>
+
     <div id="bookingStatus" class="status"></div>
   </form>
 </section>
@@ -121,7 +121,8 @@
 
   function jsonpRequest(params) {
     return new Promise(resolve => {
-      const cb = "cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      const cb =
+        "cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
 
       params.prefix = cb;
       params.token = CAL_TOKEN;
@@ -150,20 +151,18 @@
     const dateStr = document.getElementById("date").value;
     const timeSelect = document.getElementById("time");
 
-    if (!dateStr) return;
+    if (!dateStr) {
+      timeSelect.innerHTML = "<option>בחר תאריך קודם...</option>";
+      return;
+    }
 
-    // ✅ iOS-safe date parsing
-    const parts = dateStr.split("-");
-    const localDate = new Date(
-      Number(parts[0]),
-      Number(parts[1]) - 1,
-      Number(parts[2])
-    );
+    // iOS-safe local date parsing
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const localDate = new Date(y, m - 1, d);
 
     if (localDate.getDay() !== 5) {
-      alert("ניתן להזמין רק ביום שישי");
-      document.getElementById("date").value = "";
-      timeSelect.innerHTML = "<option>בחר תאריך קודם...</option>";
+      timeSelect.innerHTML =
+        "<option>ניתן להזמין רק ביום שישי</option>";
       return;
     }
 
@@ -180,7 +179,7 @@
     for (let h = 9; h <= 14; h++) {
       for (let m of ["00", "35"]) {
         if (h === 14 && m === "35") continue;
-        const t = `${String(h).padStart(2,"0")}:${m}`;
+        const t = `${String(h).padStart(2, "0")}:${m}`;
         const opt = document.createElement("option");
         opt.value = t;
         opt.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
