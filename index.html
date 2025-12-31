@@ -67,7 +67,7 @@
       color: #0a74da;
     }
 
-    /* ⭐ REVIEWS BOX */
+    /* ⭐ REVIEWS */
     .rating-box {
       position: fixed;
       right: 20px;
@@ -121,14 +121,11 @@
 <!-- ⭐ REVIEWS -->
 <div class="rating-box">
   <h3>דרגו אותנו ⭐</h3>
-
   <div class="stars" id="stars">
     <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
   </div>
-
   <input id="reviewName" placeholder="השם שלכם" />
   <textarea id="feedback" placeholder="כתבו חוות דעת קצרה..."></textarea>
-
   <button type="button" onclick="sendFeedback()">שלח</button>
   <div id="reviewsList"></div>
 </div>
@@ -153,19 +150,14 @@
     <label>תאריך (שישי בלבד)</label>
     <input id="date" type="date" required step="7" />
 
-    <button type="button" onclick="refreshTimes()">
-      הצג שעות פנויות
-    </button>
+    <button type="button" onclick="refreshTimes()">הצג שעות פנויות</button>
 
     <label>שעה פנויה</label>
     <select id="time">
       <option>בחר תאריך קודם...</option>
     </select>
 
-    <button type="submit">
-      קבע תור + שלח בוואטסאפ
-    </button>
-
+    <button type="submit">קבע תור + שלח בוואטסאפ</button>
     <div id="bookingStatus" class="status"></div>
   </form>
 </section>
@@ -176,11 +168,11 @@
   const CAL_TOKEN =
     "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-  /* 🔒 Restrict date picker to Fridays only */
+  /* 🔒 Restrict date picker to Fridays */
   (function restrictToFridays() {
     const dateInput = document.getElementById("date");
     const today = new Date();
-    const day = today.getDay(); // 0=Sun ... 5=Fri
+    const day = today.getDay();
     const daysUntilFriday = (5 - day + 7) % 7 || 7;
 
     const nextFriday = new Date(
@@ -189,11 +181,8 @@
       today.getDate() + daysUntilFriday
     );
 
-    const yyyy = nextFriday.getFullYear();
-    const mm = String(nextFriday.getMonth() + 1).padStart(2, "0");
-    const dd = String(nextFriday.getDate()).padStart(2, "0");
-
-    dateInput.min = `${yyyy}-${mm}-${dd}`;
+    dateInput.min =
+      `${nextFriday.getFullYear()}-${String(nextFriday.getMonth()+1).padStart(2,"0")}-${String(nextFriday.getDate()).padStart(2,"0")}`;
   })();
 
   /* ---------- JSONP ---------- */
@@ -254,8 +243,8 @@
     }
   }
 
-  /* ---------- BOOK ---------- */
-  async function bookAndWhatsApp(e) {
+  /* ---------- BOOK + WHATSAPP (iOS SAFE) ---------- */
+  function bookAndWhatsApp(e) {
     e.preventDefault();
 
     const name = document.getElementById("name").value;
@@ -263,29 +252,28 @@
     const date = document.getElementById("date").value;
     const time = document.getElementById("time").value;
 
-    const res = await jsonpRequest({
+    const msg =
+      `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n` +
+      `שם: ${name}\n` +
+      `סוג שטיפה: ${service}\n` +
+      `תאריך: ${date}\n` +
+      `שעה: ${time}`;
+
+    // 🔥 iOS requires WhatsApp to open immediately
+    window.location.href =
+      "https://wa.me/972585378542?text=" +
+      encodeURIComponent(msg);
+
+    // Background booking (allowed)
+    jsonpRequest({
       action: "book",
       name, service, date, time
     });
-
-    if (res.ok) {
-      const msg =
-        `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n` +
-        `שם: ${name}\n` +
-        `סוג שטיפה: ${service}\n` +
-        `תאריך: ${date}\n` +
-        `שעה: ${time}`;
-
-      window.location.href =
-        "https://wa.me/972585378542?text=" +
-        encodeURIComponent(msg);
-    }
   }
 
   /* ---------- REVIEWS ---------- */
   let rating = 0;
   const stars = document.querySelectorAll("#stars span");
-
   stars.forEach((s, i) => {
     s.onclick = () => {
       rating = i + 1;
