@@ -13,7 +13,7 @@
       background-color: #000;
       background-image:
         linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
-        url('./images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg');
+        url("images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg");
       background-position: center;
       background-size: cover;
       background-attachment: fixed;
@@ -45,14 +45,18 @@
       font-weight: bold;
     }
 
+    /* 🔥 TRANSPARENT GLASS SECTIONS */
     section {
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+
       color: #222;
       max-width: 900px;
       margin: 20px auto;
       padding: 20px;
       border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
     h2 { color: #0a74da; }
@@ -91,7 +95,7 @@
       right: 20px;
       top: 140px;
       width: 230px;
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.9);
       color: #222;
       border-radius: 12px;
       padding: 12px;
