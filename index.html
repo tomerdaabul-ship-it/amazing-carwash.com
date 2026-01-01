@@ -169,7 +169,9 @@ async function loadTimes(){
 
   let r;
   try{
-    r=await jsonpRequest({action:"busy",date});
+    alert("About to call JSONP");
+r = await jsonpRequest({ action:"busy", date });
+alert("JSONP returned");
   }catch(e){
     box.textContent="שגיאה בטעינת שעות";
     btn.disabled=false;
