@@ -29,7 +29,11 @@ section{
   box-shadow:0 4px 12px rgba(0,0,0,.25);
 }
 h2{color:#0a74da}
-label{display:block;margin-top:12px;font-weight:bold}
+label{
+  display:block;
+  margin-top:12px;
+  font-weight:bold;
+}
 input,select{
   width:100%;
   padding:10px;
@@ -128,17 +132,17 @@ function jsonpRequest(params){
   });
 }
 
-/* ===== Load times ===== */
+/* ===== Load available hours ===== */
 async function loadTimes(){
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time");
-  if(!date) return;
+  const dateVal = document.getElementById("date").value;
+  const timeSel = document.getElementById("time");
+  if(!dateVal) return;
 
-  time.innerHTML = "<option>טוען...</option>";
-  const r = await jsonpRequest({ action:"busy", date });
+  timeSel.innerHTML = "<option>טוען...</option>";
+  const r = await jsonpRequest({ action:"busy", date: dateVal });
   const busy = r.busy || [];
 
-  time.innerHTML = "";
+  timeSel.innerHTML = "";
   for(let h=9; h<=14; h++){
     for(const m of ["00","35"]){
       if(h===14 && m==="35") continue;
@@ -147,7 +151,7 @@ async function loadTimes(){
       o.value = t;
       o.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
       o.disabled = busy.includes(t);
-      time.appendChild(o);
+      timeSel.appendChild(o);
     }
   }
 }
@@ -157,13 +161,20 @@ async function bookAndWhatsApp(){
   const status = document.getElementById("status");
   status.textContent = "שומר תור...";
 
+  const nameVal = document.getElementById("name").value;
+  const phoneVal = document.getElementById("phone").value;
+  const serviceVal = document.getElementById("service").value;
+  const dateVal = document.getElementById("date").value;
+  const timeVal = document.getElementById("time").value;
+
   const r = await jsonpRequest({
     action:"book",
     token:CAL_TOKEN,
-    name:document.getElementById("name").value,
-    service:document.getElementById("service").value,
-    date:document.getElementById("date").value,
-    time:document.getElementById("time").value
+    name:nameVal,
+    phone:phoneVal,
+    service:serviceVal,
+    date:dateVal,
+    time:timeVal
   });
 
   if(!r || !r.ok){
@@ -172,11 +183,12 @@ async function bookAndWhatsApp(){
   }
 
   const msg =
-    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n`+
-    `שם: ${name.value}\n`+
-    `סוג שטיפה: ${service.value}\n`+
-    `תאריך: ${date.value}\n`+
-    `שעה: ${time.value}`;
+    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n` +
+    `שם: ${nameVal}\n` +
+    `טלפון: ${phoneVal}\n` +
+    `סוג שטיפה: ${serviceVal}\n` +
+    `תאריך: ${dateVal}\n` +
+    `שעה: ${timeVal}`;
 
   window.location.href =
     "https://wa.me/972585378542?text=" +
