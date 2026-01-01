@@ -97,7 +97,7 @@ button{
 <label>תאריך (שישי בלבד)</label>
 <input id="date" type="date" onchange="onDateChange()">
 
-<button type="button" onclick="loadTimes()">הצג שעות פנויות</button>
+<button id="loadBtn" type="button" onclick="loadTimes()">הצג שעות פנויות</button>
 
 <label>בחר שעה</label>
 <div id="hours"></div>
@@ -108,6 +108,7 @@ button{
 </section>
 
 <script>
+/* ================= CONFIG ================= */
 const CAL_API_URL =
   "https://script.google.com/macros/s/AKfycbyMSFmXoKgQ4jXoMKFJ1E1icx_Rdo3YHrOWqOJfTa_BDSVu2TUPYYfaaMn0c24a-NYZ/exec";
 const CAL_TOKEN =
@@ -116,7 +117,7 @@ const CAL_TOKEN =
 let selectedTime = "";
 let bookingInProgress = false;
 
-/* Fridays only */
+/* ===== Fridays only ===== */
 (() => {
   const d=document.getElementById("date");
   const t=new Date();
@@ -125,40 +126,58 @@ let bookingInProgress = false;
   d.min=t.toISOString().slice(0,10);
 })();
 
+/* ===== JSONP helper ===== */
 function jsonpRequest(params){
   return new Promise(resolve=>{
     const cb="cb_"+Math.random().toString(36).slice(2);
     params.prefix=cb;
     const s=document.createElement("script");
     s.src=CAL_API_URL+"?"+new URLSearchParams(params);
-    window[cb]=d=>{resolve(d);delete window[cb];s.remove();}
+    window[cb]=d=>{
+      resolve(d);
+      delete window[cb];
+      s.remove();
+    };
     document.body.appendChild(s);
   });
 }
 
-/* 🔥 Android-safe date commit */
+/* ===== Android-safe date commit ===== */
 function onDateChange(){
-  // slight delay lets Android commit the value
-  setTimeout(loadTimes, 50);
+  setTimeout(loadTimes, 200);
 }
 
+/* ===== Load hours (HARD GUARDS) ===== */
 async function loadTimes(){
-  const date=document.getElementById("date").value;
+  const dateInput=document.getElementById("date");
+  const date=dateInput.value;
   const box=document.getElementById("hours");
-  box.innerHTML="";
-  selectedTime="";
+  const btn=document.getElementById("loadBtn");
 
-  if(!date){
-    box.textContent="נא לבחור תאריך";
+  selectedTime="";
+  box.innerHTML="";
+
+  // 🔴 HARD GUARD
+  if(!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)){
+    box.textContent="נא לבחור תאריך תקין";
     return;
   }
 
+  btn.disabled=true;
   box.textContent="טוען...";
 
-  const r=await jsonpRequest({action:"busy",date});
-  const busy=r.busy||[];
+  let r;
+  try{
+    r=await jsonpRequest({action:"busy",date});
+  }catch(e){
+    box.textContent="שגיאה בטעינת שעות";
+    btn.disabled=false;
+    return;
+  }
 
+  const busy=r.busy||[];
   box.innerHTML="";
+
   for(let h=9;h<=14;h++){
     for(const m of["00","35"]){
       if(h===14&&m==="35")continue;
@@ -177,8 +196,11 @@ async function loadTimes(){
       box.appendChild(b);
     }
   }
+
+  btn.disabled=false;
 }
 
+/* ===== Book + WhatsApp ===== */
 async function bookAndWhatsApp(){
   if(bookingInProgress) return;
   bookingInProgress=true;
@@ -193,8 +215,8 @@ async function bookAndWhatsApp(){
 
   status.textContent="שומר תור...";
 
-  const name=document.getElementById("name").value;
-  const phone=document.getElementById("phone").value;
+  const name=document.getElementById("name").value.trim();
+  const phone=document.getElementById("phone").value.trim();
   const service=document.getElementById("service").value;
   const date=document.getElementById("date").value;
 
@@ -205,7 +227,7 @@ async function bookAndWhatsApp(){
   });
 
   if(!r||!r.ok){
-    status.textContent="שגיאה";
+    status.textContent="שגיאה בקביעת התור";
     bookingInProgress=false;
     return;
   }
