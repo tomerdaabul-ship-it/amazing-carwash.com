@@ -15,10 +15,7 @@ body{
     center/cover fixed no-repeat;
   color:#fff;
 }
-header{
-  text-align:center;
-  padding:70px 20px;
-}
+header{text-align:center;padding:70px 20px}
 section{
   background:rgba(255,255,255,.8);
   color:#111;
@@ -26,14 +23,8 @@ section{
   margin:20px auto;
   padding:20px;
   border-radius:14px;
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
 }
-h2{color:#0a74da}
-label{
-  display:block;
-  margin-top:12px;
-  font-weight:bold;
-}
+label{font-weight:bold;display:block;margin-top:12px}
 input,select{
   width:100%;
   padding:10px;
@@ -53,12 +44,30 @@ button{
   cursor:pointer;
   margin-top:14px;
 }
-button:active{opacity:.85}
-.status{
+#hours{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:10px;
   margin-top:10px;
-  font-weight:bold;
-  color:#0a74da;
 }
+.hour-btn{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #0a74da;
+  background:#fff;
+  color:#0a74da;
+  font-weight:bold;
+  cursor:pointer;
+}
+.hour-btn.active{
+  background:#0a74da;
+  color:#fff;
+}
+.hour-btn.disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+.status{margin-top:10px;font-weight:bold;color:#0a74da}
 </style>
 </head>
 
@@ -88,140 +97,106 @@ button:active{opacity:.85}
 <label>תאריך (שישי בלבד)</label>
 <input id="date" type="date">
 
-<button type="button" onclick="loadTimes()">הצג שעות פנויות</button>
+<button onclick="loadTimes()">הצג שעות פנויות</button>
 
-<label>שעה פנויה</label>
-<select id="time">
-  <option>בחר תאריך קודם...</option>
-</select>
+<label>בחר שעה</label>
+<div id="hours"></div>
 
-<button type="button" onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
+<button onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
 
 <div id="status" class="status"></div>
 </section>
 
 <script>
-/* ================= CONFIG ================= */
 const CAL_API_URL =
   "https://script.google.com/macros/s/AKfycbyMSFmXoKgQ4jXoMKFJ1E1icx_Rdo3YHrOWqOJfTa_BDSVu2TUPYYfaaMn0c24a-NYZ/exec";
 const CAL_TOKEN =
   "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-/* ============== Fridays only ============== */
+let selectedTime = "";
+
+/* Fridays only */
 (() => {
-  const dateInput = document.getElementById("date");
-  const today = new Date();
-  const diff = (5 - today.getDay() + 7) % 7 || 7;
-  today.setDate(today.getDate() + diff);
-  dateInput.min = today.toISOString().slice(0,10);
+  const d=document.getElementById("date");
+  const t=new Date();
+  const diff=(5-t.getDay()+7)%7||7;
+  t.setDate(t.getDate()+diff);
+  d.min=t.toISOString().slice(0,10);
 })();
 
-/* ============== JSONP helper ============== */
 function jsonpRequest(params){
   return new Promise(resolve=>{
-    const cb = "cb_" + Math.random().toString(36).slice(2);
-    params.prefix = cb;
-    const s = document.createElement("script");
-    s.src = CAL_API_URL + "?" + new URLSearchParams(params);
-    window[cb] = data => {
-      resolve(data);
-      delete window[cb];
-      s.remove();
-    };
+    const cb="cb_"+Math.random().toString(36).slice(2);
+    params.prefix=cb;
+    const s=document.createElement("script");
+    s.src=CAL_API_URL+"?"+new URLSearchParams(params);
+    window[cb]=d=>{resolve(d);delete window[cb];s.remove();}
     document.body.appendChild(s);
   });
 }
 
-/* ============== Load hours (ANDROID SAFE) ============== */
 async function loadTimes(){
-  const dateVal = document.getElementById("date").value;
-  const timeSel = document.getElementById("time");
-  if(!dateVal) return;
+  const date=document.getElementById("date").value;
+  const box=document.getElementById("hours");
+  box.innerHTML="טוען...";
+  selectedTime="";
 
-  timeSel.innerHTML = "";
-  timeSel.disabled = true;
+  const r=await jsonpRequest({action:"busy",date});
+  const busy=r.busy||[];
 
-  const loadingOpt = document.createElement("option");
-  loadingOpt.textContent = "טוען...";
-  loadingOpt.value = "";
-  timeSel.appendChild(loadingOpt);
-
-  const r = await jsonpRequest({ action:"busy", date:dateVal });
-  const busy = r.busy || [];
-
-  timeSel.innerHTML = "";
-  let hasFree = false;
-
-  for(let h=9; h<=14; h++){
-    for(const m of ["00","35"]){
-      if(h===14 && m==="35") continue;
-      const t = `${String(h).padStart(2,"0")}:${m}`;
-      if(busy.includes(t)) continue;
-
-      const opt = document.createElement("option");
-      opt.value = t;
-      opt.textContent = t;
-      timeSel.appendChild(opt);
-      hasFree = true;
+  box.innerHTML="";
+  for(let h=9;h<=14;h++){
+    for(const m of["00","35"]){
+      if(h===14&&m==="35")continue;
+      const t=`${String(h).padStart(2,"0")}:${m}`;
+      const b=document.createElement("div");
+      b.textContent=t;
+      b.className="hour-btn"+(busy.includes(t)?" disabled":"");
+      if(!busy.includes(t)){
+        b.onclick=()=>{
+          document.querySelectorAll(".hour-btn")
+            .forEach(x=>x.classList.remove("active"));
+          b.classList.add("active");
+          selectedTime=t;
+        };
+      }
+      box.appendChild(b);
     }
   }
-
-  if(!hasFree){
-    const opt = document.createElement("option");
-    opt.textContent = "אין שעות פנויות";
-    opt.value = "";
-    timeSel.appendChild(opt);
-  }
-
-  // 🔥 Android reflow fix
-  timeSel.disabled = false;
-  timeSel.style.display = "none";
-  timeSel.offsetHeight;
-  timeSel.style.display = "block";
 }
 
-/* ============== Book + WhatsApp ============== */
 async function bookAndWhatsApp(){
-  const status = document.getElementById("status");
-  status.textContent = "שומר תור...";
-
-  const nameVal    = document.getElementById("name").value.trim();
-  const phoneVal   = document.getElementById("phone").value.trim();
-  const serviceVal = document.getElementById("service").value;
-  const dateVal    = document.getElementById("date").value;
-  const timeVal    = document.getElementById("time").value;
-
-  if(!nameVal || !dateVal || !timeVal){
-    status.textContent = "נא למלא את כל השדות";
+  const status=document.getElementById("status");
+  if(!selectedTime){
+    status.textContent="נא לבחור שעה";
     return;
   }
 
-  const resp = await jsonpRequest({
+  status.textContent="שומר תור...";
+
+  const name=document.getElementById("name").value;
+  const phone=document.getElementById("phone").value;
+  const service=document.getElementById("service").value;
+  const date=document.getElementById("date").value;
+
+  const r=await jsonpRequest({
     action:"book",
     token:CAL_TOKEN,
-    name:nameVal,
-    phone:phoneVal,
-    service:serviceVal,
-    date:dateVal,
-    time:timeVal
+    name,phone,service,date,time:selectedTime
   });
 
-  if(!resp || !resp.ok){
-    status.textContent = "שגיאה בקביעת התור";
+  if(!r||!r.ok){
+    status.textContent="שגיאה";
     return;
   }
 
-  const msg =
-    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n` +
-    `שם: ${nameVal}\n` +
-    `טלפון: ${phoneVal}\n` +
-    `סוג שטיפה: ${serviceVal}\n` +
-    `תאריך: ${dateVal}\n` +
-    `שעה: ${timeVal}`;
+  const msg=
+    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n`+
+    `שם: ${name}\nטלפון: ${phone}\n`+
+    `סוג: ${service}\nתאריך: ${date}\nשעה: ${selectedTime}`;
 
-  window.location.href =
-    "https://wa.me/972585378542?text=" +
-    encodeURIComponent(msg);
+  window.location.href=
+    "https://wa.me/972585378542?text="+encodeURIComponent(msg);
 }
 </script>
 
