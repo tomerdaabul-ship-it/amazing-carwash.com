@@ -17,7 +17,7 @@ body{
 }
 header{text-align:center;padding:70px 20px}
 section{
-  background:rgba(255,255,255,.72);
+  background:rgba(255,255,255,.75);
   color:#111;
   max-width:900px;
   margin:20px auto;
@@ -30,7 +30,6 @@ input,select,textarea{
   margin-top:5px;
   border-radius:6px;
   border:1px solid #ccc;
-  background:rgba(255,255,255,.85);
 }
 button{
   background:#0a74da;
@@ -42,22 +41,7 @@ button{
   font-size:16px;
   font-weight:bold;
   cursor:pointer;
-  margin-top:10px;
-}
-.rating-box{
-  position:fixed;
-  right:20px;
-  top:140px;
-  width:240px;
-  background:rgba(255,255,255,.8);
-  color:#111;
-  padding:12px;
-  border-radius:12px;
-}
-.stars span{cursor:pointer;font-size:22px;filter:grayscale(100%)}
-.stars span.active{filter:grayscale(0%)}
-@media(max-width:900px){
-  .rating-box{position:static;margin:10px auto}
+  margin-top:12px;
 }
 </style>
 </head>
@@ -69,62 +53,54 @@ button{
   <p>(הזמנות בימי שישי בלבד)</p>
 </header>
 
-<!-- ⭐ Reviews -->
-<div class="rating-box">
-  <h3>דרגו אותנו ⭐</h3>
-  <div class="stars" id="stars">
-    <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
-  </div>
-  <input id="reviewName" placeholder="השם שלכם">
-  <textarea id="feedback" placeholder="כתבו חוות דעת..."></textarea>
-  <button type="button" onclick="sendFeedback()">שלח</button>
-  <div id="reviewsList"></div>
-</div>
-
 <section>
 <h2>הזמנת שטיפה</h2>
 
-<form onsubmit="bookAndWhatsApp(event)">
+<!-- ❌ NO FORM SUBMISSION AT ALL -->
+<div id="booking">
+
 <label>שם מלא</label>
-<input id="name" required>
+<input id="name">
 
 <label>טלפון</label>
-<input id="phone" required>
+<input id="phone">
 
 <label>סוג שטיפה</label>
 <select id="service">
-<option>פנים וחוץ – 60 ₪</option>
-<option>חוץ בלבד – 25 ₪</option>
-<option>פנים בלבד – 35 ₪</option>
+  <option>פנים וחוץ – 60 ₪</option>
+  <option>חוץ בלבד – 25 ₪</option>
+  <option>פנים בלבד – 35 ₪</option>
 </select>
 
 <label>תאריך (שישי בלבד)</label>
-<input id="date" type="date" required step="7">
+<input id="date" type="date">
 
-<button type="button" onclick="refreshTimes()">הצג שעות פנויות</button>
+<button onclick="refreshTimes()">הצג שעות פנויות</button>
 
 <label>שעה פנויה</label>
 <select id="time">
-<option>בחר תאריך קודם...</option>
+  <option>בחר תאריך קודם...</option>
 </select>
 
-<button type="submit">קבע תור + שלח בוואטסאפ</button>
-</form>
+<button onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
+
+</div>
 </section>
 
 <script>
+/* 🔧 CONFIG */
 const CAL_API_URL =
   "https://script.google.com/macros/s/AKfycbwwyzZwnv_vVe3vcgVat7i6oY9mL1SH9aV2SbbjM_e_A9WhClOg2l6C7zfU9OPaywyF/exec";
 const CAL_TOKEN =
   "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
 /* Fridays only */
-(function(){
-  const d=document.getElementById("date");
-  const t=new Date();
-  const diff=(5-t.getDay()+7)%7||7;
-  t.setDate(t.getDate()+diff);
-  d.min=t.toISOString().slice(0,10);
+(() => {
+  const d = document.getElementById("date");
+  const t = new Date();
+  const diff = (5 - t.getDay() + 7) % 7 || 7;
+  t.setDate(t.getDate() + diff);
+  d.min = t.toISOString().slice(0,10);
 })();
 
 /* JSONP busy slots */
@@ -142,14 +118,14 @@ function jsonpRequest(params){
 async function refreshTimes(){
   const date=document.getElementById("date").value;
   const time=document.getElementById("time");
-  if(!date)return;
+  if(!date) return;
   time.innerHTML="<option>טוען...</option>";
   const r=await jsonpRequest({action:"busy",date});
   const busy=r.busy||[];
   time.innerHTML="";
   for(let h=9;h<=14;h++){
     for(let m of["00","35"]){
-      if(h===14&&m==="35")continue;
+      if(h===14&&m==="35") continue;
       const t=`${String(h).padStart(2,"0")}:${m}`;
       const o=document.createElement("option");
       o.value=t;
@@ -160,10 +136,8 @@ async function refreshTimes(){
   }
 }
 
-/* ✅ FINAL BOOKING FLOW */
-async function bookAndWhatsApp(e){
-  e.preventDefault();
-
+/* ✅ FINAL SAFE FLOW */
+async function bookAndWhatsApp(){
   const params=new URLSearchParams({
     action:"book",
     token:CAL_TOKEN,
@@ -192,29 +166,6 @@ async function bookAndWhatsApp(e){
     "https://wa.me/972585378542?text=" +
     encodeURIComponent(msg);
 }
-
-/* Reviews */
-let rating=0;
-document.querySelectorAll("#stars span").forEach((s,i)=>{
-  s.onclick=()=>{
-    rating=i+1;
-    document.querySelectorAll("#stars span")
-      .forEach((st,j)=>st.classList.toggle("active",j<rating));
-  }
-});
-function sendFeedback(){
-  if(!rating||!feedback.value)return alert("אנא דרגו");
-  const r=JSON.parse(localStorage.getItem("reviews")||"[]");
-  r.unshift({n:reviewName.value||"אנונימי",r:rating,t:feedback.value});
-  localStorage.setItem("reviews",JSON.stringify(r.slice(0,5)));
-  location.reload();
-}
-(function(){
-  const r=JSON.parse(localStorage.getItem("reviews")||"[]");
-  reviewsList.innerHTML=r.map(x=>
-    `<div><b>${x.n}</b> (${ "⭐".repeat(x.r) })<br>${x.t}</div>`
-  ).join("")||"אין חוות דעת";
-})();
 </script>
 
 </body>
