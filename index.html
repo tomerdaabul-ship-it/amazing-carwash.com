@@ -111,9 +111,12 @@ button{
 <button type="submit">קבע תור + שלח בוואטסאפ</button>
 </form>
 </section>
-  <script>
-const CAL_API_URL="https://script.google.com/macros/s/AKfycbwwyzZwnv_vVe3vcgVat7i6oY9mL1SH9aV2SbbjM_e_A9WhClOg2l6C7zfU9OPaywyF/exec";
-const CAL_TOKEN="X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
+
+<script>
+const CAL_API_URL =
+  "https://script.google.com/macros/s/AKfycbwwyzZwnv_vVe3vcgVat7i6oY9mL1SH9aV2SbbjM_e_A9WhClOg2l6C7zfU9OPaywyF/exec";
+const CAL_TOKEN =
+  "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
 /* Fridays only */
 (function(){
@@ -124,7 +127,7 @@ const CAL_TOKEN="X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
   d.min=t.toISOString().slice(0,10);
 })();
 
-/* JSONP busy slots ONLY */
+/* JSONP busy slots */
 function jsonpRequest(params){
   return new Promise(resolve=>{
     const cb="cb_"+Math.random().toString(36).slice(2);
@@ -157,9 +160,10 @@ async function refreshTimes(){
   }
 }
 
-/* 🔥 ONLY booking path (NO JSON, NO FETCH) */
-function bookAndWhatsApp(e){
+/* ✅ FINAL BOOKING FLOW */
+async function bookAndWhatsApp(e){
   e.preventDefault();
+
   const params=new URLSearchParams({
     action:"book",
     token:CAL_TOKEN,
@@ -168,7 +172,25 @@ function bookAndWhatsApp(e){
     date:date.value,
     time:time.value
   });
-  window.location.href=CAL_API_URL+"?"+params.toString();
+
+  const res=await fetch(CAL_API_URL+"?"+params.toString());
+  const data=await res.json();
+
+  if(!data.ok){
+    alert("שגיאה בקביעת התור");
+    return;
+  }
+
+  const msg =
+    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n`+
+    `שם: ${name.value}\n`+
+    `סוג שטיפה: ${service.value}\n`+
+    `תאריך: ${date.value}\n`+
+    `שעה: ${time.value}`;
+
+  window.location.href =
+    "https://wa.me/972585378542?text=" +
+    encodeURIComponent(msg);
 }
 
 /* Reviews */
@@ -176,7 +198,8 @@ let rating=0;
 document.querySelectorAll("#stars span").forEach((s,i)=>{
   s.onclick=()=>{
     rating=i+1;
-    document.querySelectorAll("#stars span").forEach((st,j)=>st.classList.toggle("active",j<rating));
+    document.querySelectorAll("#stars span")
+      .forEach((st,j)=>st.classList.toggle("active",j<rating));
   }
 });
 function sendFeedback(){
@@ -188,7 +211,9 @@ function sendFeedback(){
 }
 (function(){
   const r=JSON.parse(localStorage.getItem("reviews")||"[]");
-  reviewsList.innerHTML=r.map(x=>`<div><b>${x.n}</b> (${ "⭐".repeat(x.r) })<br>${x.t}</div>`).join("")||"אין חוות דעת";
+  reviewsList.innerHTML=r.map(x=>
+    `<div><b>${x.n}</b> (${ "⭐".repeat(x.r) })<br>${x.t}</div>`
+  ).join("")||"אין חוות דעת";
 })();
 </script>
 
