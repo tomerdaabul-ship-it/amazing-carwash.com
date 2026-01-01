@@ -95,14 +95,14 @@ button{
 </select>
 
 <label>תאריך (שישי בלבד)</label>
-<input id="date" type="date">
+<input id="date" type="date" onchange="onDateChange()">
 
-<button onclick="loadTimes()">הצג שעות פנויות</button>
+<button type="button" onclick="loadTimes()">הצג שעות פנויות</button>
 
 <label>בחר שעה</label>
 <div id="hours"></div>
 
-<button onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
+<button type="button" onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
 
 <div id="status" class="status"></div>
 </section>
@@ -114,6 +114,7 @@ const CAL_TOKEN =
   "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
 let selectedTime = "";
+let bookingInProgress = false;
 
 /* Fridays only */
 (() => {
@@ -135,11 +136,24 @@ function jsonpRequest(params){
   });
 }
 
+/* 🔥 Android-safe date commit */
+function onDateChange(){
+  // slight delay lets Android commit the value
+  setTimeout(loadTimes, 50);
+}
+
 async function loadTimes(){
   const date=document.getElementById("date").value;
   const box=document.getElementById("hours");
-  box.innerHTML="טוען...";
+  box.innerHTML="";
   selectedTime="";
+
+  if(!date){
+    box.textContent="נא לבחור תאריך";
+    return;
+  }
+
+  box.textContent="טוען...";
 
   const r=await jsonpRequest({action:"busy",date});
   const busy=r.busy||[];
@@ -166,9 +180,14 @@ async function loadTimes(){
 }
 
 async function bookAndWhatsApp(){
+  if(bookingInProgress) return;
+  bookingInProgress=true;
+
   const status=document.getElementById("status");
+
   if(!selectedTime){
     status.textContent="נא לבחור שעה";
+    bookingInProgress=false;
     return;
   }
 
@@ -187,6 +206,7 @@ async function bookAndWhatsApp(){
 
   if(!r||!r.ok){
     status.textContent="שגיאה";
+    bookingInProgress=false;
     return;
   }
 
