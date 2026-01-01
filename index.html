@@ -2,8 +2,8 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>האחים מכונית בע"מ 🚗💦🧽</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>האחים מכונית בע"מ 🚗💦🧽</title>
 
 <style>
 body{
@@ -20,7 +20,7 @@ header{
   padding:70px 20px;
 }
 section{
-  background:rgba(255,255,255,.78);
+  background:rgba(255,255,255,.8);
   color:#111;
   max-width:900px;
   margin:20px auto;
@@ -101,30 +101,30 @@ button:active{opacity:.85}
 </section>
 
 <script>
-/* ===== CONFIG ===== */
+/* ================= CONFIG ================= */
 const CAL_API_URL =
   "https://script.google.com/macros/s/AKfycbyMSFmXoKgQ4jXoMKFJ1E1icx_Rdo3YHrOWqOJfTa_BDSVu2TUPYYfaaMn0c24a-NYZ/exec";
 const CAL_TOKEN =
   "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-/* ===== Fridays only ===== */
+/* ============== Fridays only ============== */
 (() => {
-  const d = document.getElementById("date");
-  const t = new Date();
-  const diff = (5 - t.getDay() + 7) % 7 || 7;
-  t.setDate(t.getDate() + diff);
-  d.min = t.toISOString().slice(0,10);
+  const dateInput = document.getElementById("date");
+  const today = new Date();
+  const diff = (5 - today.getDay() + 7) % 7 || 7;
+  today.setDate(today.getDate() + diff);
+  dateInput.min = today.toISOString().slice(0,10);
 })();
 
-/* ===== JSONP helper ===== */
+/* ============== JSONP helper ============== */
 function jsonpRequest(params){
   return new Promise(resolve=>{
     const cb = "cb_" + Math.random().toString(36).slice(2);
     params.prefix = cb;
     const s = document.createElement("script");
     s.src = CAL_API_URL + "?" + new URLSearchParams(params);
-    window[cb] = d => {
-      resolve(d);
+    window[cb] = data => {
+      resolve(data);
       delete window[cb];
       s.remove();
     };
@@ -132,42 +132,71 @@ function jsonpRequest(params){
   });
 }
 
-/* ===== Load available hours ===== */
+/* ============== Load hours (ANDROID SAFE) ============== */
 async function loadTimes(){
   const dateVal = document.getElementById("date").value;
   const timeSel = document.getElementById("time");
   if(!dateVal) return;
 
-  timeSel.innerHTML = "<option>טוען...</option>";
-  const r = await jsonpRequest({ action:"busy", date: dateVal });
+  timeSel.innerHTML = "";
+  timeSel.disabled = true;
+
+  const loadingOpt = document.createElement("option");
+  loadingOpt.textContent = "טוען...";
+  loadingOpt.value = "";
+  timeSel.appendChild(loadingOpt);
+
+  const r = await jsonpRequest({ action:"busy", date:dateVal });
   const busy = r.busy || [];
 
   timeSel.innerHTML = "";
+  let hasFree = false;
+
   for(let h=9; h<=14; h++){
     for(const m of ["00","35"]){
       if(h===14 && m==="35") continue;
       const t = `${String(h).padStart(2,"0")}:${m}`;
-      const o = document.createElement("option");
-      o.value = t;
-      o.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
-      o.disabled = busy.includes(t);
-      timeSel.appendChild(o);
+      if(busy.includes(t)) continue;
+
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      timeSel.appendChild(opt);
+      hasFree = true;
     }
   }
+
+  if(!hasFree){
+    const opt = document.createElement("option");
+    opt.textContent = "אין שעות פנויות";
+    opt.value = "";
+    timeSel.appendChild(opt);
+  }
+
+  // 🔥 Android reflow fix
+  timeSel.disabled = false;
+  timeSel.style.display = "none";
+  timeSel.offsetHeight;
+  timeSel.style.display = "block";
 }
 
-/* ===== Book + WhatsApp ===== */
+/* ============== Book + WhatsApp ============== */
 async function bookAndWhatsApp(){
   const status = document.getElementById("status");
   status.textContent = "שומר תור...";
 
-  const nameVal = document.getElementById("name").value;
-  const phoneVal = document.getElementById("phone").value;
+  const nameVal    = document.getElementById("name").value.trim();
+  const phoneVal   = document.getElementById("phone").value.trim();
   const serviceVal = document.getElementById("service").value;
-  const dateVal = document.getElementById("date").value;
-  const timeVal = document.getElementById("time").value;
+  const dateVal    = document.getElementById("date").value;
+  const timeVal    = document.getElementById("time").value;
 
-  const r = await jsonpRequest({
+  if(!nameVal || !dateVal || !timeVal){
+    status.textContent = "נא למלא את כל השדות";
+    return;
+  }
+
+  const resp = await jsonpRequest({
     action:"book",
     token:CAL_TOKEN,
     name:nameVal,
@@ -177,7 +206,7 @@ async function bookAndWhatsApp(){
     time:timeVal
   });
 
-  if(!r || !r.ok){
+  if(!resp || !resp.ok){
     status.textContent = "שגיאה בקביעת התור";
     return;
   }
