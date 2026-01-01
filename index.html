@@ -2,66 +2,125 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<title>האחים מכונית בע"מ 🚗💦🧽</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>האחים מכונית בע"מ</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: #fff;
-  padding: 20px;
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:
+    linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),
+    url("images/mercedes-amg-gt-r-night-racing-track-1920x1080-97.jpg")
+    center/cover fixed no-repeat;
+  color:#fff;
 }
-section {
-  background: rgba(255,255,255,0.9);
-  color: #000;
-  padding: 20px;
-  border-radius: 12px;
+header{
+  text-align:center;
+  padding:70px 20px;
 }
-button {
-  width: 100%;
-  padding: 15px;
-  margin-top: 15px;
-  font-size: 16px;
+section{
+  background:rgba(255,255,255,.78);
+  color:#111;
+  max-width:900px;
+  margin:20px auto;
+  padding:20px;
+  border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+h2{color:#0a74da}
+label{display:block;margin-top:12px;font-weight:bold}
+input,select{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+button{
+  background:#0a74da;
+  color:#fff;
+  border:none;
+  padding:14px;
+  width:100%;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:14px;
+}
+button:active{opacity:.85}
+.status{
+  margin-top:10px;
+  font-weight:bold;
+  color:#0a74da;
 }
 </style>
 </head>
 
 <body>
 
+<header>
+  <h1>האחים מכונית בע"מ 🚗💦🧽</h1>
+  <p>(הזמנות בימי שישי בלבד)</p>
+</header>
+
 <section>
-<label>שם</label>
+<h2>הזמנת שטיפה</h2>
+
+<label>שם מלא</label>
 <input id="name">
+
+<label>טלפון</label>
+<input id="phone">
 
 <label>סוג שטיפה</label>
 <select id="service">
-  <option>פנים וחוץ</option>
-  <option>חוץ בלבד</option>
-  <option>פנים בלבד</option>
+  <option>פנים וחוץ – 60 ₪</option>
+  <option>חוץ בלבד – 25 ₪</option>
+  <option>פנים בלבד – 35 ₪</option>
 </select>
 
-<label>תאריך</label>
+<label>תאריך (שישי בלבד)</label>
 <input id="date" type="date">
 
-<button onclick="loadHours()">טען שעות</button>
+<button type="button" onclick="loadTimes()">הצג שעות פנויות</button>
 
-<select id="time"></select>
+<label>שעה פנויה</label>
+<select id="time">
+  <option>בחר תאריך קודם...</option>
+</select>
 
-<button onclick="book()">קבע תור + וואטסאפ</button>
+<button type="button" onclick="bookAndWhatsApp()">קבע תור + שלח בוואטסאפ</button>
+
+<div id="status" class="status"></div>
 </section>
 
 <script>
-const CAL_API_URL = "https://script.google.com/macros/s/AKfycbyMSFmXoKgQ4jXoMKFJ1E1icx_Rdo3YHrOWqOJfTa_BDSVu2TUPYYfaaMn0c24a-NYZ/exec";
-const CAL_TOKEN = "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
+/* ===== CONFIG ===== */
+const CAL_API_URL =
+  "https://script.google.com/macros/s/AKfycbyMSFmXoKgQ4jXoMKFJ1E1icx_Rdo3YHrOWqOJfTa_BDSVu2TUPYYfaaMn0c24a-NYZ/exec";
+const CAL_TOKEN =
+  "X9mP2qL8vR4nK7jW3yB5tH6dC1sF0gZ2xM8bV4lQ";
 
-function jsonp(params) {
-  return new Promise(resolve => {
+/* ===== Fridays only ===== */
+(() => {
+  const d = document.getElementById("date");
+  const t = new Date();
+  const diff = (5 - t.getDay() + 7) % 7 || 7;
+  t.setDate(t.getDate() + diff);
+  d.min = t.toISOString().slice(0,10);
+})();
+
+/* ===== JSONP helper ===== */
+function jsonpRequest(params){
+  return new Promise(resolve=>{
     const cb = "cb_" + Math.random().toString(36).slice(2);
     params.prefix = cb;
     const s = document.createElement("script");
     s.src = CAL_API_URL + "?" + new URLSearchParams(params);
-    window[cb] = data => {
-      resolve(data);
+    window[cb] = d => {
+      resolve(d);
       delete window[cb];
       s.remove();
     };
@@ -69,41 +128,59 @@ function jsonp(params) {
   });
 }
 
-async function loadHours() {
-  alert("Loading hours"); // DEBUG – proves click works
+/* ===== Load times ===== */
+async function loadTimes(){
   const date = document.getElementById("date").value;
-  const timeSel = document.getElementById("time");
-  const r = await jsonp({ action: "busy", date });
-  timeSel.innerHTML = "";
-  (r.busy || []).forEach(t => {
-    const o = document.createElement("option");
-    o.textContent = t;
-    o.value = t;
-    timeSel.appendChild(o);
-  });
+  const time = document.getElementById("time");
+  if(!date) return;
+
+  time.innerHTML = "<option>טוען...</option>";
+  const r = await jsonpRequest({ action:"busy", date });
+  const busy = r.busy || [];
+
+  time.innerHTML = "";
+  for(let h=9; h<=14; h++){
+    for(const m of ["00","35"]){
+      if(h===14 && m==="35") continue;
+      const t = `${String(h).padStart(2,"0")}:${m}`;
+      const o = document.createElement("option");
+      o.value = t;
+      o.textContent = busy.includes(t) ? `${t} (תפוס)` : t;
+      o.disabled = busy.includes(t);
+      time.appendChild(o);
+    }
+  }
 }
 
-async function book() {
-  alert("Booking click works"); // DEBUG
-  const name = document.getElementById("name").value;
-  const service = document.getElementById("service").value;
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
+/* ===== Book + WhatsApp ===== */
+async function bookAndWhatsApp(){
+  const status = document.getElementById("status");
+  status.textContent = "שומר תור...";
 
-  const r = await jsonp({
-    action: "book",
-    token: CAL_TOKEN,
-    name, service, date, time
+  const r = await jsonpRequest({
+    action:"book",
+    token:CAL_TOKEN,
+    name:document.getElementById("name").value,
+    service:document.getElementById("service").value,
+    date:document.getElementById("date").value,
+    time:document.getElementById("time").value
   });
 
-  if (!r.ok) {
-    alert("Booking failed");
+  if(!r || !r.ok){
+    status.textContent = "שגיאה בקביעת התור";
     return;
   }
 
-  const msg = `נקבע תור:\n${name}\n${service}\n${date} ${time}`;
+  const msg =
+    `שלום,\nנקבע תור לשטיפת רכב 🚗\n\n`+
+    `שם: ${name.value}\n`+
+    `סוג שטיפה: ${service.value}\n`+
+    `תאריך: ${date.value}\n`+
+    `שעה: ${time.value}`;
+
   window.location.href =
-    "https://wa.me/972585378542?text=" + encodeURIComponent(msg);
+    "https://wa.me/972585378542?text=" +
+    encodeURIComponent(msg);
 }
 </script>
 
